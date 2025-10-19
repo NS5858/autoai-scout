@@ -2,8 +2,13 @@ services:
   - type: web
     name: autoai-backend
     env: python
-    buildCommand: "pip install -r requirements.txt && playwright install chromium"
-    startCommand: "uvicorn main:app --host 0.0.0.0 --port 10000"
+    buildCommand: |
+      pip install --upgrade pip setuptools wheel
+      pip install -r requirements.txt
+      playwright install chromium
+    startCommand: uvicorn main:app --host 0.0.0.0 --port 10000
     envVars:
       - key: PORT
         value: 10000
+      - key: RENDER_PYTHON_VERSION
+        value: 3.10.13
