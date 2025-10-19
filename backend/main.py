@@ -2,7 +2,8 @@ from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, HttpUrl
 from fastapi.middleware.cors import CORSMiddleware
 import random, time
-from core.pipeline import analyze_url
+from app.core.pipeline import analyze
+
 
 app = FastAPI(title="AutoAI Scout Backend", version="1.0.0")
 app.add_middleware(
@@ -32,3 +33,4 @@ def analyze(inp: AnalyzeIn):
         return {"ok": True, "data": result}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
