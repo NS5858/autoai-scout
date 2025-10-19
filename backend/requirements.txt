@@ -9,4 +9,5 @@ numpy==2.1.2
 scikit-learn==1.5.2
 pillow==10.4.0
 opencv-python-headless==4.10.0.84
-greenlet==3.0.3
+greenlet==2.0.2
+SQLAlchemy==2.0.29
