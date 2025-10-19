@@ -1,5 +1,5 @@
 fastapi==0.115.0
-uvicorn==0.30.6
+uvicorn[standard]==0.30.6
 playwright==1.47.0
 beautifulsoup4==4.12.3
 lxml==5.3.0
@@ -9,5 +9,4 @@ numpy==2.1.2
 scikit-learn==1.5.2
 pillow==10.4.0
 opencv-python-headless==4.10.0.84
-greenlet==2.0.2
-SQLAlchemy==2.0.29
+greenlet==3.0.3
