@@ -1,1 +1,10 @@
+services:
+  - type: web
+    name: autoai-frontend
+    env: static
+    buildCommand: "npm run build"
+    staticPublishPath: "dist"
+    envVars:
+      - key: VITE_API_URL
+        value: "https://autoai-scout.onrender.com"
 
