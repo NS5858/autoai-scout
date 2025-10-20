@@ -1,5 +1,5 @@
 # ---- Basis-Image: Python + Playwright ----
-FROM mcr.microsoft.com/playwright/python:v1.47.0-jammy
+FROM python:3.10-slim
 
 # ---- Arbeitsverzeichnis ----
 WORKDIR /app/backend
