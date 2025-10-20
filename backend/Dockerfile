@@ -1,20 +1,21 @@
-# Playwright + Python + alle Browser-Dependencies fix & gepflegt
+# ---- Basis-Image: Python + Playwright ----
 FROM mcr.microsoft.com/playwright/python:v1.47.0-jammy
 
-WORKDIR /app
+# ---- Arbeitsverzeichnis ----
+WORKDIR /app/backend
 
-# zuerst nur Requirements kopieren, damit Docker-Cache wirkt
+# ---- Dependencies installieren ----
 COPY requirements.txt .
 RUN pip install --upgrade pip setuptools wheel && \
-    pip install -r requirements.txt
+    pip install -r requirements.txt && \
+    playwright install chromium
 
-# dann den restlichen Code
+# ---- Projektdateien kopieren ----
 COPY . .
 
-# Render erwartet einen offenen Port
+# ---- Port setzen ----
 ENV PORT=10000
 EXPOSE 10000
 
-# FastAPI starten (liegt bei dir als backend/main.py)
-CMD ["uvicorn", "backend.main:app", "--host", "0.0.0.0", "--port", "10000"]
-
+# ---- FastAPI starten ----
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "10000"]
