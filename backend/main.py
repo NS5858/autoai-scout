@@ -1,65 +1,77 @@
 from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import re
 
-# ---- FastAPI App ----
 app = FastAPI(title="AutoAI Scout", version="1.0.0")
 
-# ---- CORS: Frontend darf zugreifen (StackBlitz, Render, usw.) ----
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],      # fürs Testen offen; später Domains einschränken
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+class AnalyzeInput(BaseModel):
+    text: str
 
-# ---- Health / Root ----
 @app.get("/")
 def home():
     return {"ok": True, "service": "autoai-scout", "version": "1.0.0"}
 
-# ---- Analyze Endpoint ----
-class AnalyzeInput(BaseModel):
-    text: str
-
 @app.post("/analyze")
 def analyze(input: AnalyzeInput):
-    t = input.text.lower()
+    text = input.text.lower()
 
-    # Marken grob erkennen
-    brands = ["mercedes","bmw","audi","vw","porsche","ford","toyota","opel","seat","skoda","renault","peugeot"]
-    brand = next((b for b in brands if b in t), None)
+    # 1) Marke erkennen (einfaches Wörterbuch)
+    brands = ["mercedes", "bmw", "audi", "vw", "porsche", "ford", "toyota", "opel", "seat", "skoda", "renault", "peugeot"]
+    brand = next((b for b in brands if b in text), None)
 
-    # Modell grob erkennen (z. B. 280ce, 320d, a4, c200, golf 5)
-    model_match = re.search(r"\b([a-z]?\d{2,4}[a-z]{0,3}|[acq]\d{1,3}|golf\s?\d)\b", t)
+    # 2) Modell grob erkennen (z.B. 280ce, 320d, a4, c200)
+    model_match = re.search(r"\b([a-z]?\d{2,4}[a-z]{0,3}|[acq]\d{1,3}|golf\s?\d)\b", text)
     model = model_match.group(1) if model_match else None
 
-    # Preis mit € erkennen (Punkte/Spaces raus)
-    price_match = re.search(r"(\d{3,6})\s?€", t.replace(".", "").replace(" ", ""))
+    # 3) Preis herausziehen (Zahlen + €)
+    price_match = re.search(r"(\d{3,6})\s?€", text.replace(".", "").replace(" ", ""))
     price = int(price_match.group(1)) if price_match else None
 
-    # Zustand heuristisch
+    # 4) Zustand heuristisch
     condition = "gebraucht"
-    if "neu" in t:
+    if "neu" in text:
         condition = "neu"
-    if "unfall" in t or "schaden" in t:
+    if "unfall" in text or "schaden" in text:
         condition = "unfallwagen"
-    if "top" in t or "sehr gut" in t or "scheckheft" in t:
+    if "top" in text or "sehr gut" in text or "scheckheft" in text:
         condition = "sehr gut"
 
-    # Fallback-Preise
-    base = {"mercedes":12000,"bmw":11000,"audi":10500,"vw":9000,"porsche":45000,"ford":8000,"toyota":8500,"opel":7000,"seat":7500,"skoda":8000,"renault":6500,"peugeot":6500}
-    estimated = price or base.get(brand, 8000)
+    # 5) Basispreise (Fallback, wenn kein Preis im Text)
+    base_prices = {
+        "mercedes": 12000, "bmw": 11000, "audi": 10500, "vw": 9000,
+        "porsche": 45000, "ford": 8000, "toyota": 8500, "opel": 7000,
+        "seat": 7500, "skoda": 8000, "renault": 6500, "peugeot": 6500
+    }
+    estimated = price or base_prices.get(brand, 8000)
 
-    # einfache Confidence
-    conf = 0.9 if brand and (price or model) else (0.7 if brand else 0.5)
+    # 6) grobe Confidence
+    confidence = 0.9 if brand and (price or model) else (0.7 if brand else 0.5)
 
     return {
         "brand": brand,
         "model": model,
         "condition": condition,
         "estimated_price": estimated,
-        "confidence": round(conf, 2)
+        "confidence": round(confidence, 2)
+    }
+from core.link_parser import extract_text_from_url
+@app.post("/analyze_url")
+def analyze_url(data: dict):
+    """
+    Nimmt eine URL entgegen, ruft den Text ab und analysiert sie wie /analyze.
+    """
+    url = data.get("url")
+    if not url:
+        return {"error": "Bitte gib eine gültige URL an."}
+
+    # Text von der Seite extrahieren
+    extracted_text = extract_text_from_url(url)
+
+    # Bereits bestehende /analyze-Logik wiederverwenden
+    result = analyze(AnalyzeInput(text=extracted_text))
+
+    return {
+        "url": url,
+        "extracted_text": extracted_text,
+        "analysis": result
     }
