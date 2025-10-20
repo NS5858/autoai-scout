@@ -31,4 +31,11 @@ export default defineConfig({
       },
       workbox: {
         cleanupOutdatedCaches: true,
-        navigateFallback: "/index.h
+        navigateFallback: "/index.html"
+      }
+    })
+  ],
+  build: {
+    outDir: "dist"
+  }
+});
