@@ -1,11 +1,26 @@
 from fastapi import FastAPI
 from pydantic import BaseModel
+from fastapi.middleware.cors import CORSMiddleware
 import re
 from core.link_parser import extract_text_from_url
 
+# ------------------------------------------------------------
+# App-Setup
+# ------------------------------------------------------------
 app = FastAPI(title="AutoAI Scout", version="1.0.0")
 
-# ----------- Basismodell für Textanalyse -----------
+# 🔓 CORS aktivieren, damit dein Frontend (Render) auf das Backend zugreifen darf
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # später ggf. ersetzen durch deine Domain
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# ------------------------------------------------------------
+# Textbasierte Analyse
+# ------------------------------------------------------------
 class AnalyzeInput(BaseModel):
     text: str
 
@@ -15,20 +30,22 @@ def home():
     return {"ok": True, "service": "autoai-scout", "version": "1.0.0"}
 
 
-# ----------- Textbasierte Analyse -----------
 @app.post("/analyze")
 def analyze(input: AnalyzeInput):
     text = input.text.lower()
 
     # 1) Marke erkennen
-    brands = ["mercedes", "bmw", "audi", "vw", "porsche", "ford", "toyota", "opel", "seat", "skoda", "renault", "peugeot"]
+    brands = [
+        "mercedes", "bmw", "audi", "vw", "porsche", "ford",
+        "toyota", "opel", "seat", "skoda", "renault", "peugeot"
+    ]
     brand = next((b for b in brands if b in text), None)
 
     # 2) Modell grob erkennen
     model_match = re.search(r"\b([a-z]?\d{2,4}[a-z]{0,3}|[acq]\d{1,3}|golf\s?\d)\b", text)
     model = model_match.group(1) if model_match else None
 
-    # 3) Preis herausziehen
+    # 3) Preis herausziehen (Zahlen + €)
     price_match = re.search(r"(\d{3,6})\s?€", text.replace(".", "").replace(" ", ""))
     price = int(price_match.group(1)) if price_match else None
 
@@ -41,7 +58,7 @@ def analyze(input: AnalyzeInput):
     if "top" in text or "sehr gut" in text or "scheckheft" in text:
         condition = "sehr gut"
 
-    # 5) Basispreise
+    # 5) Basispreise (Fallback)
     base_prices = {
         "mercedes": 12000, "bmw": 11000, "audi": 10500, "vw": 9000,
         "porsche": 45000, "ford": 8000, "toyota": 8500, "opel": 7000,
@@ -60,18 +77,16 @@ def analyze(input: AnalyzeInput):
         "confidence": round(confidence, 2)
     }
 
-
-# ----------- URL-basierte Analyse (z.B. Kleinanzeigen-Link) -----------
+# ------------------------------------------------------------
+# URL-basierte Analyse (z. B. mobile.de, eBay Kleinanzeigen)
+# ------------------------------------------------------------
 class AnalyzeUrlInput(BaseModel):
     url: str
 
 
 @app.post("/analyze_url")
 def analyze_url(input: AnalyzeUrlInput):
-    # Text aus der URL extrahieren
     extracted_text = extract_text_from_url(input.url)
-
-    # Interne Textanalyse wiederverwenden
     analysis = analyze(AnalyzeInput(text=extracted_text))
 
     return {
