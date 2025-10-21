@@ -1,16 +1,14 @@
-const API_URL = "https://autoai-scout.onrender.com";
+const BACKEND_URL = "https://autoai-scout.onrender.com";
 
-export async function analyzeText(text) {
-  const response = await fetch(`${API_URL}/analyze`, {
+export async function analyzeUrl(url) {
+  const response = await fetch(`${BACKEND_URL}/analyze`, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ text }),
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ url }),
   });
 
   if (!response.ok) {
-    throw new Error("Serverfehler oder keine Verbindung");
+    throw new Error("Backend nicht erreichbar");
   }
 
   return await response.json();

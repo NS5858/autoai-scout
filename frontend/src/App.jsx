@@ -1,25 +1,30 @@
 import React, { useState } from "react";
-import axios from "axios";
+import { analyzeUrl } from "./api";
+import "./styles.css";
 
 export default function App() {
   const [url, setUrl] = useState("");
-  const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
-
-  const backendUrl = import.meta.env.VITE_API_URL || "https://autoai-scout.onrender.com";
+  const [error, setError] = useState("");
+  const [result, setResult] = useState(null);
 
   const handleAnalyze = async () => {
-    setError(null);
-    setResult(null);
     if (!url.trim()) {
-      setError("Bitte einen Fahrzeug-Link eingeben.");
+      setError("Bitte gib einen gültigen Fahrzeuglink ein.");
       return;
     }
+
+    setError("");
     setLoading(true);
+    setResult(null);
+
     try {
-      const response = await axios.post(`${backendUrl}/analyze`, { url });
-      setResult(response.data);
+      const data = await analyzeUrl(url);
+      if (data.success) {
+        setResult(data.data);
+      } else {
+        setError(data.message || "Analyse fehlgeschlagen.");
+      }
     } catch (err) {
       setError("Analyse fehlgeschlagen – bitte überprüfe den Link oder versuche es später erneut.");
     } finally {
@@ -28,57 +33,39 @@ export default function App() {
   };
 
   return (
-    <div style={{ fontFamily: "sans-serif", padding: "2rem", maxWidth: "700px", margin: "auto" }}>
-      <h1 style={{ color: "#0078ff", textAlign: "center" }}>🚗 AutoAI Scout</h1>
-      <p style={{ textAlign: "center" }}>Fahrzeuginserat eingeben und KI-Analyse starten</p>
+    <div className="container">
+      <h1>🚗 <span className="highlight">AutoAI Scout</span></h1>
+      <p className="subtitle">Fahrzeuginserat eingeben und KI-Analyse starten</p>
 
-      <div style={{ display: "flex", gap: "0.5rem", marginTop: "2rem" }}>
+      <div className="input-group">
         <input
           type="text"
+          placeholder="https://www.autoscout24.de/..."
           value={url}
           onChange={(e) => setUrl(e.target.value)}
-          placeholder="z. B. https://www.autoscout24.de/angebote/..."
-          style={{
-            flex: 1,
-            padding: "0.8rem",
-            borderRadius: "8px",
-            border: "1px solid #ccc",
-          }}
         />
-        <button
-          onClick={handleAnalyze}
-          disabled={loading}
-          style={{
-            padding: "0.8rem 1.2rem",
-            backgroundColor: "#0078ff",
-            color: "white",
-            border: "none",
-            borderRadius: "8px",
-            cursor: "pointer",
-          }}
-        >
+        <button onClick={handleAnalyze} disabled={loading}>
           {loading ? "Analysiere..." : "Start"}
         </button>
       </div>
 
-      {error && (
-        <p style={{ color: "red", marginTop: "1rem" }}>{error}</p>
-      )}
+      {error && <p className="error">{error}</p>}
 
       {result && (
-        <div
-          style={{
-            marginTop: "2rem",
-            padding: "1rem",
-            border: "1px solid #ddd",
-            borderRadius: "10px",
-            background: "#fafafa",
-          }}
-        >
-          <h3>Analyse-Ergebnis</h3>
-          <pre style={{ whiteSpace: "pre-wrap" }}>
-            {JSON.stringify(result, null, 2)}
-          </pre>
+        <div className="result">
+          <h2>Analyse-Ergebnis</h2>
+          <p><strong>Plattform:</strong> {result.details.platform}</p>
+          <p><strong>Fahrzeug:</strong> {result.details.title}</p>
+          <p><strong>Erstzulassung:</strong> {result.details.year}</p>
+          <p><strong>Kilometerstand:</strong> {result.details.mileage.toLocaleString()} km</p>
+          <p><strong>Angebotspreis:</strong> {result.details.original_price.toLocaleString()} €</p>
+          <hr />
+          <p className="ai">
+            Geschätzter Marktwert: <span className="value">{result.estimated_value.toLocaleString()} €</span>
+          </p>
+          <p className="confidence">
+            KI-Zuverlässigkeit: <span className="value">{result.ai_confidence}%</span>
+          </p>
         </div>
       )}
     </div>

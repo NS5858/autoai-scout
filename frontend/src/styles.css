@@ -1,0 +1,90 @@
+body {
+  font-family: "Inter", sans-serif;
+  background: linear-gradient(180deg, #f8f9ff 0%, #eaf1ff 100%);
+  margin: 0;
+  padding: 0;
+  color: #222;
+}
+
+.container {
+  max-width: 600px;
+  margin: 6rem auto;
+  text-align: center;
+  background: white;
+  padding: 2rem 2.5rem;
+  border-radius: 16px;
+  box-shadow: 0 6px 25px rgba(0, 0, 0, 0.1);
+}
+
+h1 {
+  font-size: 2.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.highlight {
+  color: #0077ff;
+}
+
+.subtitle {
+  color: #555;
+  font-size: 1rem;
+  margin-bottom: 2rem;
+}
+
+.input-group {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: center;
+}
+
+input {
+  flex: 1;
+  padding: 0.8rem;
+  border: 2px solid #ccc;
+  border-radius: 8px;
+  font-size: 1rem;
+}
+
+button {
+  background-color: #0077ff;
+  color: white;
+  padding: 0.8rem 1.2rem;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+button:hover {
+  background-color: #005ccc;
+}
+
+.error {
+  margin-top: 1rem;
+  color: #e53e3e;
+  font-weight: bold;
+}
+
+.result {
+  margin-top: 2rem;
+  padding: 1.5rem;
+  border-radius: 12px;
+  background-color: #f0f8ff;
+  border: 1px solid #c9e3ff;
+}
+
+.result h2 {
+  color: #0077ff;
+  margin-bottom: 1rem;
+}
+
+.value {
+  font-weight: bold;
+  color: #0077ff;
+}
+
+.ai, .confidence {
+  font-size: 1.1rem;
+  margin-top: 0.5rem;
+}
