@@ -1,15 +1,15 @@
-import tldextract
-from urllib.parse import urlparse, urlunparse
+from app.providers import autoscout24, mobile_de, ebay_kleinanzeigen
 
-def normalize_url(url: str) -> str:
-    p = urlparse(url)
-    scheme = p.scheme or "https"
-    netloc = p.netloc.lower()
-    path = p.path
-    query = p.query
-    return urlunparse((scheme, netloc, path, "", query, ""))
-
-def domain_key(url: str) -> str:
-    ext = tldextract.extract(url)
-    # e.g. autoscout24.de -> autoscout24
-    return ext.domain.lower()
+def parse_listing(url: str):
+    """Erkennt automatisch die Plattform und ruft den passenden Parser auf."""
+    try:
+        if "autoscout24" in url:
+            return autoscout24.parse(url)
+        elif "mobile.de" in url:
+            return mobile_de.parse(url)
+        elif "ebay" in url or "kleinanzeigen" in url:
+            return ebay_kleinanzeigen.parse(url)
+        else:
+            raise ValueError("Unbekannte Plattform oder ungültiger Link.")
+    except Exception as e:
+        raise RuntimeError(f"Fehler beim Parsen: {e}")
