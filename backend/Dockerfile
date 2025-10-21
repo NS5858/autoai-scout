@@ -22,5 +22,5 @@ COPY ./app ./app
 # Port freigeben
 EXPOSE 8000
 
-# Startbefehl
-CMD ["uvicorn", "app.main:app", "--host=0.0.0.0", "--port=8000"]
+# Startbefehl (korrekt für Render & Ordnerstruktur)
+CMD ["uvicorn", "main:app", "--host=0.0.0.0", "--port=8000", "--app-dir", "app"]
