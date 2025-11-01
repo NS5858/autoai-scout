@@ -6,36 +6,41 @@ export default function App() {
   const [url, setUrl] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [result, setResult] = useState(null);
+  const [analysis, setAnalysis] = useState(null);
 
   const handleAnalyze = async () => {
     if (!url.trim()) {
       setError("Bitte gib einen gültigen Fahrzeuglink ein.");
       return;
     }
-
     setError("");
     setLoading(true);
-    setResult(null);
-
+    setAnalysis(null);
     try {
-      const data = await analyzeUrl(url);
-      if (data.success) {
-        setResult(data.data);
+      const res = await analyzeUrl(url);
+      if (res && (res.data || res.vehicle)) {
+        // v1-Fallback oder v2-Struktur
+        const payload = res.data ?? res; 
+        setAnalysis(payload);
       } else {
-        setError(data.message || "Analyse fehlgeschlagen.");
+        setError(res?.message || "Analyse fehlgeschlagen.");
       }
-    } catch (err) {
-      setError("Analyse fehlgeschlagen – bitte überprüfe den Link oder versuche es später erneut.");
+    } catch (e) {
+      setError("Analyse fehlgeschlagen – Link prüfen oder später erneut versuchen.");
     } finally {
       setLoading(false);
     }
   };
 
+  const V = analysis?.vehicle;
+  const M = analysis?.market;
+  const D = analysis?.demand;
+  const W = analysis?.weaknesses;
+
   return (
     <div className="container">
       <h1>🚗 <span className="highlight">AutoAI Scout</span></h1>
-      <p className="subtitle">Fahrzeuginserat eingeben und KI-Analyse starten</p>
+      <p className="subtitle">Fahrzeuginserat einfügen – KI-Detektivmodus startet</p>
 
       <div className="input-group">
         <input
@@ -51,21 +56,47 @@ export default function App() {
 
       {error && <p className="error">{error}</p>}
 
-      {result && (
+      {analysis && (
         <div className="result">
           <h2>Analyse-Ergebnis</h2>
-          <p><strong>Plattform:</strong> {result.details.platform}</p>
-          <p><strong>Fahrzeug:</strong> {result.details.title}</p>
-          <p><strong>Erstzulassung:</strong> {result.details.year}</p>
-          <p><strong>Kilometerstand:</strong> {result.details.mileage.toLocaleString()} km</p>
-          <p><strong>Angebotspreis:</strong> {result.details.original_price.toLocaleString()} €</p>
-          <hr />
-          <p className="ai">
-            Geschätzter Marktwert: <span className="value">{result.estimated_value.toLocaleString()} €</span>
-          </p>
-          <p className="confidence">
-            KI-Zuverlässigkeit: <span className="value">{result.ai_confidence}%</span>
-          </p>
+
+          {V && (
+            <div className="card">
+              <h3>Fahrzeug</h3>
+              <p><strong>Plattform:</strong> {V.platform}</p>
+              <p><strong>Modell:</strong> {V.title}</p>
+              <p><strong>Erstzulassung:</strong> {V.year}</p>
+              <p><strong>Kilometerstand:</strong> {Number(V.mileage ?? 0).toLocaleString()} km</p>
+              <p><strong>Angebotspreis:</strong> {Number(V.price ?? 0).toLocaleString()} €</p>
+            </div>
+          )}
+
+          {M && (
+            <div className="card">
+              <h3>Marktbewertung</h3>
+              <p><strong>Durchschnittlicher Marktwert:</strong> {Number(M.average_market_value ?? 0).toLocaleString()} €</p>
+              <p><strong>Preisabweichung:</strong> {Number(M.price_difference ?? 0).toLocaleString()} €</p>
+              <p><strong>Einschätzung:</strong> {M.valuation}</p>
+              <p><strong>Vergleichsdaten:</strong> {M.comparables}</p>
+            </div>
+          )}
+
+          {D && (
+            <div className="card">
+              <h3>Nachfrage</h3>
+              <p><strong>Score:</strong> {D.score}</p>
+              <p><strong>Niveau:</strong> {D.demand_level}</p>
+            </div>
+          )}
+
+          {W && (
+            <div className="card">
+              <h3>Typische Schwachstellen</h3>
+              <ul>
+                {W.map((w, i) => <li key={i}>{w}</li>)}
+              </ul>
+            </div>
+          )}
         </div>
       )}
     </div>
